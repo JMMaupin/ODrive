@@ -5,11 +5,12 @@ from odrive.enums import *
 import odrive.enums as oenums
 import time
 import math
+import can
 
 odrv0 = odrive.find_any()
 
 
-odrv0.config.dc_bus_overvoltage_trip_level = 16.5
+odrv0.config.dc_bus_overvoltage_trip_level = 17
 odrv0.config.dc_bus_undervoltage_trip_level = 10.5
 odrv0.config.dc_max_positive_current = math.inf
 odrv0.config.dc_max_negative_current = -math.inf
@@ -24,13 +25,22 @@ odrv0.axis0.config.calibration_lockin.current = 10
 odrv0.axis0.motor.motor_thermistor.config.enabled = False
 odrv0.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
 odrv0.axis0.controller.config.input_mode = InputMode.VEL_RAMP
-odrv0.axis0.controller.config.vel_limit = 10
+odrv0.axis0.controller.config.vel_limit = 20
 odrv0.axis0.controller.config.vel_limit_tolerance = 5
 odrv0.axis0.config.torque_soft_min = -1
 odrv0.axis0.config.torque_soft_max = 1
-odrv0.axis0.trap_traj.config.accel_limit = 10
-odrv0.axis0.controller.config.vel_ramp_rate = 10
-odrv0.can.config.protocol = Protocol.NONE
+odrv0.axis0.trap_traj.config.accel_limit = 20
+odrv0.axis0.controller.config.vel_ramp_rate = 20
+odrv0.can.config.protocol = Protocol.SIMPLE
+odrv0.can.config.baud_rate = 1000000
+odrv0.axis0.config.can.node_id = 0
+odrv0.axis0.config.can.heartbeat_msg_rate_ms = 100
+odrv0.axis0.config.can.encoder_msg_rate_ms = 10
+odrv0.axis0.config.can.iq_msg_rate_ms = 10
+odrv0.axis0.config.can.torques_msg_rate_ms = 10
+odrv0.axis0.config.can.error_msg_rate_ms = 10
+odrv0.axis0.config.can.temperature_msg_rate_ms = 10
+odrv0.axis0.config.can.bus_voltage_msg_rate_ms = 10
 odrv0.axis0.config.enable_watchdog = False
 odrv0.axis0.config.load_encoder = EncoderId.RS485_ENCODER0
 odrv0.axis0.config.commutation_encoder = EncoderId.RS485_ENCODER0
@@ -65,7 +75,7 @@ odrv0.axis0.requested_state = oenums.AXIS_STATE_CLOSED_LOOP_CONTROL
 while True:
     # Déplacement vers pos1
     print(f"Déplacement vers pos1 = {pos1} tours")
-    odrv0.axis0.controller.input_pos = pos1
+    odrv0.axis0.axis0.controller.input_pos = pos1
     # Attente active jusqu'à atteindre pos1
     while abs(odrv0.axis0.pos_estimate - pos1) > tolerance:
         time.sleep(0.01)
@@ -74,7 +84,7 @@ while True:
 
     # Déplacement vers pos0
     print(f"Déplacement vers pos0 = {pos0} tours")
-    odrv0.axis0.controller.input_pos = pos0
+    odrv0.axis0.axis0.controller.input_pos = pos0
     # Attente active jusqu'à atteindre pos0
     while abs(odrv0.axis0.pos_estimate - pos0) > tolerance:
         time.sleep(0.01)

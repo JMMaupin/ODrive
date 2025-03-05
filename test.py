@@ -1,3 +1,8 @@
-import odrive.enums as oenums
-print("INPUT_MODE_TRAP_TRAJ =", oenums.INPUT_MODE_TRAP_TRAJ)
-print("CONTROL_MODE_POSITION_CONTROL =", oenums.CONTROL_MODE_POSITION_CONTROL)
+import can
+import usb
+dev = usb.core.find(idVendor=0x1D50, idProduct=0x606F)
+
+bus = can.Bus(interface="gs_usb", channel=dev.product, index=0, bitrate=1000000)
+
+
+None
