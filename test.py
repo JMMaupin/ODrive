@@ -1,13 +1,9 @@
 import odrive
 from odrive.enums import *
-import odrive.enums as oenums
-
 import can
 import usb
 import time
 import struct
-
-
 
 # Fonction pour vider le bus CAN
 def flush_bus(bus):
@@ -35,20 +31,21 @@ bus.send(state_msg)
 print("Axe mis en Closed Loop Control via CAN.")
 time.sleep(0.2)
 
-# Définitions des positions cibles (en tours)
+# Définitions des positions cibles (en tours) et de la vitesse (en tours/seconde)
 pos0 = 0.0
 pos1 = 100.0
 tolerance = 0.1
+vitesse = 10.0  # Vitesse en tours/seconde
 
 # Fonction pour envoyer la commande de position via CAN (Set_Input_Pos, cmd_id 0x0C)
-def send_set_input_pos(target_pos):
+def send_set_input_pos(target_pos, velocity_limit):
     set_input_pos_cmd_id = 0x0C
     arb_id = (node_id << 5) | set_input_pos_cmd_id
-    # Envoie la position cible sous forme de float (4 octets)
-    data = struct.pack('<f', target_pos)
+    # Envoie la position cible et la limite de vitesse sous forme de floats (8 octets)
+    data = struct.pack('<ff', target_pos, velocity_limit)
     msg = can.Message(arbitration_id=arb_id, data=data, is_extended_id=False)
     bus.send(msg)
-    print(f"Commande envoyée: position cible = {target_pos} tours")
+    print(f"Commande envoyée: position cible = {target_pos} tours, vitesse = {velocity_limit} tours/s")
 
 # Fonction pour lire l'estimation d'encodeur (position et vitesse)
 def get_encoder_estimates(timeout=0.1):
@@ -68,12 +65,12 @@ while True:
     # Déplacement vers pos1
     target = pos1
     print(f"Déplacement vers pos1 = {target} tours")
-    send_set_input_pos(target)
+    send_set_input_pos(target, vitesse)
     reached = False
     while not reached:
-        pos_est, _ = get_encoder_estimates(timeout=0.1)
+        pos_est, vel_est = get_encoder_estimates(timeout=0.1)
         if pos_est is not None:
-            print(f"Estimation de position : {pos_est:.3f} tours")
+            print(f"Estimation de position : {pos_est:.3f} tours, vitesse : {vel_est:.3f} tours/s")
             if abs(pos_est - target) <= tolerance:
                 reached = True
         time.sleep(0.05)
@@ -83,16 +80,14 @@ while True:
     # Déplacement vers pos0
     target = pos0
     print(f"Déplacement vers pos0 = {target} tours")
-    send_set_input_pos(target)
+    send_set_input_pos(target, vitesse)
     reached = False
     while not reached:
-        pos_est, _ = get_encoder_estimates(timeout=0.1)
+        pos_est, vel_est = get_encoder_estimates(timeout=0.1)
         if pos_est is not None:
-            print(f"Estimation de position : {pos_est:.3f} tours")
+            print(f"Estimation de position : {pos_est:.3f} tours, vitesse : {vel_est:.3f} tours/s")
             if abs(pos_est - target) <= tolerance:
                 reached = True
         time.sleep(0.05)
     print("Position pos0 atteinte.")
     time.sleep(1)
-
-None
