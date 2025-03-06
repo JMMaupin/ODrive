@@ -8,7 +8,6 @@ import math
 
 odrv0 = odrive.find_any()
 
-
 odrv0.config.dc_bus_overvoltage_trip_level = 17
 odrv0.config.dc_bus_undervoltage_trip_level = 10.5
 odrv0.config.dc_max_positive_current = math.inf
