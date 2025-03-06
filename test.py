@@ -31,21 +31,28 @@ bus.send(state_msg)
 print("Axe mis en Closed Loop Control via CAN.")
 time.sleep(0.2)
 
-# Définitions des positions cibles (en tours) et de la vitesse (en tours/seconde)
+# Définitions des positions cibles (en tours), vitesse, accélération et décélération
 pos0 = 0.0
-pos1 = 100.0
+pos1 = 50.0
+vitesse = 10.0  # Vitesse maximale en tours/seconde
+acceleration = 5.0  # Accélération maximale en tours/seconde²
+deceleration = 20.0  # Décélération maximale en tours/seconde²
 tolerance = 0.1
-vitesse = 10.0  # Vitesse en tours/seconde
 
 # Fonction pour envoyer la commande de position via CAN (Set_Input_Pos, cmd_id 0x0C)
-def send_set_input_pos(target_pos, velocity_limit):
+def send_set_input_pos(target_pos, velocity_limit, accel_limit, decel_limit):
     set_input_pos_cmd_id = 0x0C
     arb_id = (node_id << 5) | set_input_pos_cmd_id
-    # Envoie la position cible et la limite de vitesse sous forme de floats (8 octets)
-    data = struct.pack('<ff', target_pos, velocity_limit)
-    msg = can.Message(arbitration_id=arb_id, data=data, is_extended_id=False)
-    bus.send(msg)
-    print(f"Commande envoyée: position cible = {target_pos} tours, vitesse = {velocity_limit} tours/s")
+    
+    # Vérifiez que vous envoyez exactement 4 floats
+    try:
+        data = struct.pack('<ffff', target_pos, velocity_limit, accel_limit, decel_limit)
+        msg = can.Message(arbitration_id=arb_id, data=data[:8], is_extended_id=False)
+        bus.send(msg)
+
+        print(f"Commande envoyée: position cible = {target_pos} tours, vitesse = {velocity_limit} tours/s, accélération = {accel_limit} tours/s², décélération = {decel_limit} tours/s²")
+    except can.CanError as e:
+        print(f"Erreur lors de l'envoi du message CAN : {e}")
 
 # Fonction pour lire l'estimation d'encodeur (position et vitesse)
 def get_encoder_estimates(timeout=0.1):
@@ -60,18 +67,18 @@ def get_encoder_estimates(timeout=0.1):
                 return pos, vel
     return None, None
 
-# Boucle principale : alterner entre pos1 et pos0
+# Boucle principale : alterner entre pos1 et pos0 avec gestion de l'accélération/décélération
 while True:
     # Déplacement vers pos1
     target = pos1
-    print(f"Déplacement vers pos1 = {target} tours")
-    send_set_input_pos(target, vitesse)
+    print(f"Déplacement vers pos1 : {target} tours")
+    send_set_input_pos(target, vitesse, acceleration, deceleration)
     reached = False
     while not reached:
-        pos_est, vel_est = get_encoder_estimates(timeout=0.1)
-        if pos_est is not None:
-            print(f"Estimation de position : {pos_est:.3f} tours, vitesse : {vel_est:.3f} tours/s")
-            if abs(pos_est - target) <= tolerance:
+        pos_estimate, vel_estimate = get_encoder_estimates(timeout=0.1)
+        if pos_estimate is not None:
+            print(f"Estimation de position : {pos_estimate:.3f} tours, vitesse : {vel_estimate:.3f} tours/s")
+            if abs(pos_estimate - target) <= tolerance:
                 reached = True
         time.sleep(0.05)
     print("Position pos1 atteinte.")
@@ -79,14 +86,14 @@ while True:
 
     # Déplacement vers pos0
     target = pos0
-    print(f"Déplacement vers pos0 = {target} tours")
-    send_set_input_pos(target, vitesse)
+    print(f"Déplacement vers pos0 : {target} tours")
+    send_set_input_pos(target, vitesse, acceleration, deceleration)
     reached = False
     while not reached:
-        pos_est, vel_est = get_encoder_estimates(timeout=0.1)
-        if pos_est is not None:
-            print(f"Estimation de position : {pos_est:.3f} tours, vitesse : {vel_est:.3f} tours/s")
-            if abs(pos_est - target) <= tolerance:
+        pos_estimate, vel_estimate = get_encoder_estimates(timeout=0.1)
+        if pos_estimate is not None:
+            print(f"Estimation de position : {pos_estimate:.3f} tours, vitesse : {vel_estimate:.3f} tours/s")
+            if abs(pos_estimate - target) <= tolerance:
                 reached = True
         time.sleep(0.05)
     print("Position pos0 atteinte.")
