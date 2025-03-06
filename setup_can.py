@@ -10,6 +10,7 @@ import can
 odrv0 = odrive.find_any()
 
 
+odrv = odrv0
 odrv0.config.dc_bus_overvoltage_trip_level = 17
 odrv0.config.dc_bus_undervoltage_trip_level = 10.5
 odrv0.config.dc_max_positive_current = math.inf
@@ -31,10 +32,7 @@ odrv0.axis0.config.torque_soft_min = -1
 odrv0.axis0.config.torque_soft_max = 1
 odrv0.axis0.trap_traj.config.accel_limit = 20
 odrv0.axis0.controller.config.vel_ramp_rate = 20
-odrv0.can.config.protocol = Protocol.SIMPLE
-odrv0.can.config.baud_rate = 1000000
-odrv0.axis0.config.can.node_id = 0
-odrv0.axis0.config.can.heartbeat_msg_rate_ms = 100
+odrv0.axis0.config.can.heartbeat_msg_rate_ms = 50
 odrv0.axis0.config.can.encoder_msg_rate_ms = 10
 odrv0.axis0.config.can.iq_msg_rate_ms = 10
 odrv0.axis0.config.can.torques_msg_rate_ms = 10
