@@ -1,0 +1,59 @@
+import usb.core
+import usb.util
+import can
+import time
+
+# Assurez-vous d'importer le backend explicitement
+import usb.backend.libusb1
+
+# Spécifier le chemin vers libusb-1.0.dll si nécessaire
+backend = usb.backend.libusb1.get_backend()
+
+# Recherche de l'adaptateur USB-CAN
+print("Recherche de l'adaptateur USB-CAN...")
+dev = usb.core.find(idVendor=0x1D50, idProduct=0x606F, backend=backend)
+
+if dev is None:
+    print("Adaptateur USB-CAN non trouvé!")
+else:
+    print(f"Adaptateur trouvé: {dev.product}")
+    
+    try:
+        # Configuration de l'interface CAN
+        print("Configuration de l'interface CAN...")
+        # Utilisation de bus et address plutôt que index pour plus de fiabilité
+        bus = can.Bus(
+            interface="gs_usb", 
+            channel=dev.product,
+            bus=dev.bus,
+            address=dev.address,
+            bitrate=250000
+        )
+        
+        print("Interface CAN configurée avec succès!")
+        
+        # Test d'envoi d'un message
+        msg = can.Message(
+            arbitration_id=0x123,
+            data=[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08],
+            is_extended_id=False
+        )
+        
+        bus.send(msg)
+        print("Message envoyé!")
+        
+        # Attendre et recevoir les messages pendant 5 secondes
+        print("En attente de messages pendant 5 secondes...")
+        timeout = time.time() + 5
+        while time.time() < timeout:
+            msg = bus.recv(1)
+            if msg:
+                print(f"Message reçu: {msg}")
+            time.sleep(0.1)
+            
+        # Fermeture propre
+        bus.shutdown()
+        print("Interface CAN fermée.")
+        
+    except Exception as e:
+        print(f"Erreur lors de la configuration: {e}")
