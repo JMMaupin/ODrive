@@ -42,46 +42,14 @@ odrv.axis0.controller.config.spinout_mechanical_power_threshold = -100
 odrv.axis0.controller.config.spinout_electrical_power_threshold = 100
 
 
+odrv.axis0.controller.config.vel_gain = 0.5
+odrv.axis0.config.startup_encoder_index_search = True
+
+odrv.axis0.config.anticogging.calib_vel_threshold = 5  # Seuil de vitesse
+odrv.axis0.config.anticogging.calib_pos_threshold = 5  # Seuil de position
+odrv.axis0.config.anticogging.max_torque = 0.5         # Couple max autorisé
+
+odrv.axis0.requested_state = AxisState.ANTICOGGING_CALIBRATION
 
 
-# Définition des positions (en tours de moteur)
-pos0 = 0.0
-pos1 = 60.0
-
-# Paramètres de mouvement (en tours/s et tours/s²)
-vitesse = 30.0      # vitesse en tours/seconde
-acc_dec = 10.0      # accélération/décélération en tours/s²
-
-# Configuration de l'axe 0 en mode position avec trajectoire planifiée (Trap Traj)
-odrv.axis0.controller.config.input_mode = oenums.INPUT_MODE_TRAP_TRAJ
-odrv.axis0.controller.config.control_mode = oenums.CONTROL_MODE_POSITION_CONTROL
-
-# Les limites de mouvement sont définies à la fois pour le contrôleur et la trajectoire
-odrv.axis0.controller.config.vel_limit = vitesse
-odrv.axis0.trap_traj.config.vel_limit = vitesse
-odrv.axis0.trap_traj.config.accel_limit = acc_dec
-odrv.axis0.trap_traj.config.decel_limit = acc_dec
-
-# Tolérance de position (en tours) pour vérifier l'arrivée
-tolerance = 0.1
-
-odrv.axis0.requested_state = oenums.AXIS_STATE_CLOSED_LOOP_CONTROL
-
-while True:
-    # Déplacement vers pos1
-    print(f"Déplacement vers pos1 = {pos1} tours")
-    odrv.axis0.controller.input_pos = pos1
-    # Attente active jusqu'à atteindre pos1
-    while abs(odrv.axis0.pos_estimate - pos1) > tolerance:
-        time.sleep(0.01)
-    print("Position pos1 atteinte.")
-    time.sleep(0.01)  # Pause de 1 seconde
-
-    # Déplacement vers pos0
-    print(f"Déplacement vers pos0 = {pos0} tours")
-    odrv.axis0.controller.input_pos = pos0
-    # Attente active jusqu'à atteindre pos0
-    while abs(odrv.axis0.pos_estimate - pos0) > tolerance:
-        time.sleep(0.01)
-    print("Position pos0 atteinte.")
-    time.sleep(0.01)  # Pause de 1 seconde
+None
